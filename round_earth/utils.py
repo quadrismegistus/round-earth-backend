@@ -13,7 +13,7 @@ def get_spatialite_path():
 
 
 @cache
-def get_db_engine(clear=True):
+def get_db_engine(clear=False):
     db_url = f'postgresql://{DB_USERNAME}@{DB_HOST}/{DB_DATABASE}'
     if clear and database_exists(db_url):
         cmd = f"psql -U {DB_USERNAME} -h {DB_HOST} -c 'DROP DATABASE {DB_DATABASE};'"
@@ -27,5 +27,12 @@ def get_db_engine(clear=True):
     return create_engine(db_url, echo=True)
 
 
+@cache
 def get_db_session():
     return Session(get_db_engine())
+
+
+def get_point(lat, lon):
+    pointstr = f'POINT({lon} {lat})'
+    point = func.Geometry(func.ST_GeographyFromText(pointstr))
+    return point

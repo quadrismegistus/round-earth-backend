@@ -3,8 +3,8 @@ from functools import lru_cache as cache, cached_property
 from typing import *
 # from fastapi import FastAPI
 # from sqlmodel import Field, Session, SQLModel, create_engine, select, Column
-from sqlalchemy import create_engine, Column, Integer, String
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
+from sqlalchemy.orm import Session, Mapped, mapped_column, relationship
 from sqlalchemy.ext.declarative import declarative_base
 from geoalchemy2 import Geometry
 from sqlalchemy import create_engine, func
