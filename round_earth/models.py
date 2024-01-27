@@ -1,32 +1,16 @@
 from .imports import *
-
-Base = declarative_base()
-
-
-def save(self):
-    self.ensure_table()
-    db = get_db_session()
-    db.add(self)
-    db.commit()
-    return self
-
-
-@classmethod
-def ensure_table(self):
-    engine = get_db_engine()
-    with engine.connect() as conn:
-        if not engine.dialect.has_table(conn, self.__tablename__):
-            self.__table__.create(engine)
-
-
-Base.save = save
-Base.ensure_table = ensure_table
+from .base import *
 
 
 class User(Base):
     __tablename__ = 'user'
     id: Mapped[int] = mapped_column(primary_key=True)
-    # posts: Mapped[List['Post']] = relationship(back_populates='user')
+    name: Mapped[str] = mapped_column(unique=True)
+    posts: Mapped[List['Post']] = relationship(back_populates='user')
+
+    @cached_property
+    def places(self):
+        return {post.place for post in self.posts}
 
 
 class Post(Base):
@@ -34,7 +18,8 @@ class Post(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
 
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
-    user: Mapped["User"] = relationship(foreign_keys=[user_id])
+    user: Mapped["User"] = relationship(back_populates='posts',
+                                        foreign_keys=[user_id])
 
     place_id: Mapped[int] = mapped_column(ForeignKey("place.id"))
     place: Mapped["Place"] = relationship(foreign_keys=[place_id])
@@ -42,18 +27,19 @@ class Post(Base):
     text: Mapped[str]
     lang: Mapped[Optional[str]]
 
-    @classmethod
-    def query_by_dist(cls, lat, lon):
-        pointstr = f'POINT({lon} {lat})'
-        point = func.Geometry(func.ST_GeographyFromText(pointstr))
-        return get_db_session().query(cls).join(Place).order_by(
-            func.ST_Distance(
-                Place.point,
-                point,
-            ))
+    translations: Mapped[List['Translation']] = relationship(
+        back_populates='post')
 
-    def dist_from(self, *x, **y):
-        return self.place.dist_from(*x, **y)
+    @classmethod
+    def nearby(cls, lat, lon):
+        point = get_point(lat, lon)
+        for post in get_db_session().query(cls).join(Place).order_by(
+                func.ST_Distance(
+                    Place.point,
+                    point,
+                )):
+            post.dist = post.place.dist_from(lat, lon)
+            yield post
 
 
 class Translation(Base):
@@ -61,7 +47,8 @@ class Translation(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
 
     post_id: Mapped[int] = mapped_column(ForeignKey('post.id'))
-    post: Mapped['Post'] = relationship()
+    post: Mapped['Post'] = relationship(back_populates='translations',
+                                        foreign_keys=[post_id])
 
     text: Mapped[str]
     lang: Mapped[str]
@@ -77,13 +64,15 @@ class Place(Base):
     country: Mapped[Optional[str]] = mapped_column(String(2))
 
     @classmethod
-    def query_by_dist(cls, lat, lon):
+    def nearby(cls, lat, lon):
         point = get_point(lat, lon)
-        return get_db_session().query(cls).order_by(
-            func.ST_Distance(
-                cls.point,
-                point,
-            ))
+        for place in get_db_session().query(cls).order_by(
+                func.ST_Distance(
+                    cls.point,
+                    point,
+                )):
+            place.dist = place.dist_from(lat, lon)
+            yield place
 
     def dist_from(self, lat, lon, metric='km'):
         dist = geodesic((lon, lat), (self.lon, self.lat))
@@ -106,22 +95,21 @@ class Place(Base):
 tables = [User, Place, Post, Translation]
 
 
-def ensure_db_tables():
+def ensure_db_tables(clear=DB_CLEAR):
+    if clear: clear_db()
     for table in tables:
         table.ensure_table()
 
 
-# class User(SQLModel, table=True):
-#     id: Optional[int] = Field(default=None, primary_key=True)
-#     name: str = Field(index=True)
+def test():
+    ensure_db_tables()
+    user = User(name='Marx').save()
+    place = Place(name='Trier', point='POINT(6.63935 49.75565)').save()
+    post = Post(user_id=user.id,
+                place_id=place.id,
+                text='Guten morgen',
+                lang='de').save()
 
-# @cache
-# def get_db_engine(clear=True):
-#     return create_engine('postgresql://localhost/round_earth', echo=True)
+    trans = Translation(post_id=post.id, text='Good morning', lang='en').save()
 
-# def get_db_session():
-#     return Session(get_db_engine())
-
-# def create_db_and_tables():
-#     os.makedirs(PATH_DATA, exist_ok=True)
-#     SQLModel.metadata.create_all(get_db_engine())
+    return post

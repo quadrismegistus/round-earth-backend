@@ -12,12 +12,19 @@ def get_spatialite_path():
             return path
 
 
-@cache
-def get_db_engine(clear=False):
-    db_url = f'postgresql://{DB_USERNAME}@{DB_HOST}/{DB_DATABASE}'
-    if clear and database_exists(db_url):
+def clear_db(db_url=None):
+    if not db_url:
+        db_url = f'postgresql://{DB_USERNAME}@{DB_HOST}/{DB_DATABASE}'
+    if database_exists(db_url):
         cmd = f"psql -U {DB_USERNAME} -h {DB_HOST} -c 'DROP DATABASE {DB_DATABASE};'"
         os.system(cmd)
+
+
+@cache
+def get_db_engine(clear=DB_CLEAR):
+    db_url = f'postgresql://{DB_USERNAME}@{DB_HOST}/{DB_DATABASE}'
+    if clear:
+        clear_db(db_url)
 
     if not database_exists(db_url):
         cmd1 = f"psql -U {DB_USERNAME} -h {DB_HOST} -c 'CREATE DATABASE {DB_DATABASE};'"

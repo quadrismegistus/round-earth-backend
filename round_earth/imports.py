@@ -12,6 +12,7 @@ from sqlalchemy_utils import database_exists, create_database
 from sqlalchemy.sql import text as sql_text
 from geopy.distance import geodesic
 from shapely import wkb
+from collections import Counter
 
 PATH_DATA = os.path.expanduser('~/.cache/round-earth-backend')
 PATH_REPO = os.path.dirname(os.path.dirname(__file__))
@@ -21,5 +22,6 @@ PATHS_SPATIALITE = ['/opt/homebrew/lib/mod_spatialite.dylib']
 DB_USERNAME = 'postgres'
 DB_DATABASE = 'round_earth'
 DB_HOST = 'localhost'
+DB_CLEAR = True
 
 from .utils import *
