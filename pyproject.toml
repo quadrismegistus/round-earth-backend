@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "round-earth-backend"
+requires-python = ">=3.8.2"
+authors = [
+    { name = "Ryan Heuser", email = "ryan.heuser@gmail.com" },
+]
+description = "API/backend to Round Earth"
+readme = "README.md"
+license = { file = "LICENSE" }
+dynamic = ["version", "dependencies"]
+urls = { "Homepage" = "https://github.com/quadrismegistus/round-earth-backend", "Project Home" = "https://github.com/quadrismegistus/round-earth", "Bug Tracker" = "https://github.com/quadrismegistus/round-earth-backend/issues" }
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Programming Language :: Python :: 3",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+scripts = { round-earth-backend = "round_earth.app:run" }
+
+[tool.setuptools]
+packages = ['round_earth']
+
+[tool.setuptools.dynamic]
+version = {attr = "version.__version__"}
+dependencies = {file = "requirements.txt"}

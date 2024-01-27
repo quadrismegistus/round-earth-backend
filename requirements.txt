@@ -1,3 +1,5 @@
 fastapi[all]
-sqlmodel
-
+geoalchemy2
+psycopg2
+geopy
+shapely
