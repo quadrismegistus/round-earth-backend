@@ -13,10 +13,13 @@ def save(self):
 
 @classmethod
 def query_by_attr(cls, **kwargs):
-    assert kwargs
-    key, val = list(kwargs.items())[0]
     db = get_db_session()
-    return db.query(cls).filter(getattr(cls, key) == val)
+    query = db.query(cls)
+    if not kwargs:
+        return query
+    else:
+        qconds = [(getattr(cls, key) == val) for key, val in kwargs.items()]
+        return query.filter(and_(*qconds))
 
 
 @classmethod
@@ -37,8 +40,14 @@ def ensure_table(self):
             self.__table__.create(engine)
 
 
+@classmethod
+def nearest(cls, lat, lon, n=25):
+    return list(itertools.islice(cls.nearby(lat, lon), n))
+
+
 Base.save = save
 Base.query_by_attr = query_by_attr
 Base.get = get
 Base.find = find
 Base.ensure_table = ensure_table
+Base.nearest = nearest

@@ -12,7 +12,8 @@ from sqlalchemy_utils import database_exists, create_database
 from sqlalchemy.sql import text as sql_text
 from geopy.distance import geodesic
 from shapely import wkb
-from collections import Counter
+import itertools
+from sqlalchemy import and_
 
 PATH_DATA = os.path.expanduser('~/.cache/round-earth-backend')
 PATH_REPO = os.path.dirname(os.path.dirname(__file__))

@@ -12,6 +12,9 @@ class User(Base):
     def places(self):
         return {post.place for post in self.posts}
 
+    def __repr__(self):
+        return f'User(id={self.id}, name={self.name})'
+
 
 class Post(Base):
     __tablename__ = 'post'
@@ -38,8 +41,29 @@ class Post(Base):
                     Place.point,
                     point,
                 )):
-            post.dist = post.place.dist_from(lat, lon)
-            yield post
+            yield post, post.place.dist_from(lat, lon)
+
+    def translate_to(self, lang):
+        if lang == self.lang: return self
+        transl = Translation.get(post_id=self.id, lang=lang)
+        if not transl:
+            res = translate_text(lang, self.text)
+            transltext = res.get('translatedText')
+            if transltext:
+                transl = Translation(post_id=self.id,
+                                     text=transltext,
+                                     lang=lang).save()
+        return transl
+
+    def __repr__(self):
+        return f'''
+Post(
+    id={self.id}, 
+    text="{self.text}", 
+    lang="{self.lang}", 
+    user={self.user}, 
+    place={self.place})'
+)'''.strip()
 
 
 class Translation(Base):
@@ -52,6 +76,9 @@ class Translation(Base):
 
     text: Mapped[str]
     lang: Mapped[str]
+
+    def __repr__(self):
+        return f'Translation(id={self.id}, post_id={self.post_id}, lang="{self.lang}", text="{self.text}")'
 
 
 class Place(Base):
@@ -71,8 +98,7 @@ class Place(Base):
                     cls.point,
                     point,
                 )):
-            place.dist = place.dist_from(lat, lon)
-            yield place
+            yield place, place.dist_from(lat, lon)
 
     def dist_from(self, lat, lon, metric='km'):
         dist = geodesic((lon, lat), (self.lon, self.lat))
@@ -90,6 +116,13 @@ class Place(Base):
     @property
     def lon(self):
         return self.latlon[1]
+
+    @cached_property
+    def point_str(self):
+        return f'POINT({self.lon} {self.lat})'
+
+    def __repr__(self):
+        return f'Place(id={self.id}, name={self.name}, point="{self.point_str}")'
 
 
 tables = [User, Place, Post, Translation]
