@@ -78,7 +78,7 @@ class Translation(Base):
     lang: Mapped[str]
 
     def __repr__(self):
-        return f'Translation(id={self.id}, post_id={self.post_id}, lang="{self.lang}", text="{self.text}")'
+        return f'Translation(id={self.id},  post_id={self.post_id}, lang="{self.lang}", text="{self.text}")'
 
 
 class Place(Base):

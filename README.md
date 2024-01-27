@@ -3,17 +3,23 @@
 
 ## Install
 
+### Docker setup
+
+```
+docker run -it \
+  -e PBF_URL=https://download.geofabrik.de/europe/monaco-latest.osm.pbf \
+  -e REPLICATION_URL=https://download.geofabrik.de/europe/monaco-updates/ \
+  -p 8080:8080 \
+  --name nominatim \
+  mediagis/nominatim:4.3
+
+```
+
 ### Mac
 
 ```
 # install system reqs
-brew install sqlite
-brew install libspatialite
-
-# configure paths
-export LDFLAGS="-L$(brew --prefix sqlite)/lib"
-export CPPFLAGS="-I$(brew --prefix sqlite)/include" 
-export PYTHON_CONFIGURE_OPTS="--enable-loadable-sqlite-extensions"
+brew install postgres postgis
 
 # install python
 pyenv install 3.12.1

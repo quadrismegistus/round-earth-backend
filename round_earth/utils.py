@@ -57,3 +57,13 @@ def translate_text(target: str, text: str) -> dict:
         text = text.decode("utf-8")
     result = translate_client.translate(text, target_language=target)
     return result
+
+
+def geodecode(lat, lon):
+    import reverse_geocode
+    coords = (lat, lon)
+    res = reverse_geocode.get(coords)
+    return {
+        'city': res.get('city', ''),
+        'country': res.get('country_code', ''),
+    }
